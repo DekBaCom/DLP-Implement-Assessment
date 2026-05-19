@@ -21,9 +21,111 @@
     @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
     .qcard { animation:fadeUp .25s ease; }
     @media(min-width:1024px){ .sidebar-sticky{position:sticky;top:16px;} }
+    /* Help modal */
+    .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:100; display:flex; align-items:center; justify-content:center; padding:1rem; backdrop-filter:blur(2px); }
+    .modal-overlay.hidden { display:none; }
+    .modal-box { background:#fff; border-radius:24px; max-width:680px; width:100%; max-height:88vh; overflow-y:auto; box-shadow:0 24px 64px rgba(0,0,0,.22); animation:fadeUp .2s ease; }
+    .modal-box::-webkit-scrollbar { width:6px; } .modal-box::-webkit-scrollbar-thumb { background:#e2e8f0; border-radius:3px; }
+    .help-step { display:flex; gap:1rem; padding:1rem 0; border-bottom:1px solid #f1f5f9; }
+    .help-step:last-child { border-bottom:none; }
+    .help-num { width:32px; height:32px; border-radius:50%; background:#0ea5e9; color:#fff; font-weight:700; font-size:.875rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px; }
+    .help-tag { display:inline-block; font-size:.72rem; font-weight:600; padding:.15rem .6rem; border-radius:999px; margin:.15rem .15rem 0 0; }
   </style>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-900">
+<!-- Help Modal -->
+<div id="help-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeHelp()">
+  <div class="modal-box">
+    <div style="padding:1.5rem 1.75rem;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;border-radius:24px 24px 0 0;">
+      <div>
+        <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:.15rem;">วิธีใช้งาน</h2>
+        <p style="font-size:.85rem;color:#64748b;">DLP Implement Assessment — คู่มือการใช้งาน</p>
+      </div>
+      <button onclick="closeHelp()" style="width:36px;height:36px;border-radius:50%;border:1px solid #e2e8f0;background:#f8fafc;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#64748b;" title="ปิด">✕</button>
+    </div>
+    <div style="padding:1rem 1.75rem 1.75rem;">
+
+      <div class="help-step">
+        <div class="help-num">1</div>
+        <div>
+          <div style="font-weight:600;margin-bottom:.35rem;">กรอกข้อมูลพื้นฐาน (Metadata)</div>
+          <p style="font-size:.875rem;color:#475569;line-height:1.6;">ระบุ <strong>Customer Name, Customer Industry, Next Step, Assessment Date</strong> และ <strong>Prepared By</strong> ที่แถบด้านบน ข้อมูลเหล่านี้จะปรากฏใน CSV/JSON ที่ export ออกไป และใช้ระบุ Industry Recommendation ด้วย</p>
+        </div>
+      </div>
+
+      <div class="help-step">
+        <div class="help-num">2</div>
+        <div>
+          <div style="font-weight:600;margin-bottom:.45rem;">ประเภทคำถาม</div>
+          <div style="font-size:.875rem;color:#475569;line-height:1.7;">
+            <div style="margin-bottom:.4rem;"><span class="help-tag" style="background:#e0f2fe;color:#0369a1;">select</span> เลือกตัวเลือกเดียวจาก dropdown</div>
+            <div style="margin-bottom:.4rem;"><span class="help-tag" style="background:#dcfce7;color:#166534;">multiselect</span> เลือกได้หลายตัวเลือกโดยติ๊ก checkbox</div>
+            <div style="margin-bottom:.4rem;"><span class="help-tag" style="background:#fef3c7;color:#92400e;">textarea</span> พิมพ์คำตอบแบบอิสระ เหมาะสำหรับบันทึก scope หรือ criteria</div>
+            <div><span class="help-tag" style="background:#f3e8ff;color:#6b21a8;">text</span> พิมพ์ข้อความสั้น เช่น จำนวน user</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="help-step">
+        <div class="help-num">3</div>
+        <div>
+          <div style="font-weight:600;margin-bottom:.35rem;">ฟิลด์แต่ละคำถาม</div>
+          <div style="font-size:.875rem;color:#475569;line-height:1.7;">
+            <div>• <strong>Customer Answer</strong> — คำตอบที่ได้จาก workshop หรือ customer</div>
+            <div>• <strong>Comments &amp; Notes</strong> — บันทึกเพิ่มเติม ข้อสมมติ ความเสี่ยง dependency</div>
+            <div>• <strong>Design Decision</strong> — ผลการตัดสินใจ เช่น Enforce - Block, Enable (Baseline)</div>
+            <div>• <strong>Recommended DLP Policy</strong> — Policy ที่แนะนำสำหรับ use case นี้ เช่น EXO DLP, Endpoint DLP</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="help-step">
+        <div class="help-num">4</div>
+        <div>
+          <div style="font-weight:600;margin-bottom:.35rem;">Apply Industry Recommendation</div>
+          <p style="font-size:.875rem;color:#475569;line-height:1.6;">เลือก <strong>Customer Industry</strong> ก่อน แล้วกดปุ่ม <strong>"Apply Industry Rec."</strong> ระบบจะเติม Design Decision และ Recommended Policy ที่เหมาะกับอุตสาหกรรมนั้นในทุกคำถามที่ยังไม่ได้ตอบ (ไม่ทับค่าที่กรอกไปแล้ว)</p>
+        </div>
+      </div>
+
+      <div class="help-step">
+        <div class="help-num">5</div>
+        <div>
+          <div style="font-weight:600;margin-bottom:.35rem;">Search &amp; Filter</div>
+          <div style="font-size:.875rem;color:#475569;line-height:1.7;">
+            <div>• <strong>Search</strong> — ค้นหาคำถามด้วย keyword หรือชื่อ section</div>
+            <div>• <strong>All / Done / Open</strong> — กรองแสดงเฉพาะคำถามทั้งหมด / ที่ตอบแล้ว / ที่ยังไม่ตอบ</div>
+            <div>• แถบ <strong>Sections</strong> ด้านซ้ายแสดง progress แต่ละ section (ตอบแล้ว/ทั้งหมด)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="help-step">
+        <div class="help-num">6</div>
+        <div>
+          <div style="font-weight:600;margin-bottom:.35rem;">Export ข้อมูล</div>
+          <div style="font-size:.875rem;color:#475569;line-height:1.7;">
+            <div>• <strong>Export CSV</strong> — ดาวน์โหลดไฟล์ .csv เปิดได้ใน Excel / Google Sheets พร้อม BOM สำหรับภาษาไทย</div>
+            <div>• <strong>Export JSON</strong> — ดาวน์โหลดไฟล์ .json สำหรับนำไปประมวลผลหรือ import ต่อ</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="help-step">
+        <div class="help-num">7</div>
+        <div>
+          <div style="font-weight:600;margin-bottom:.35rem;">Auto-save &amp; Reset</div>
+          <div style="font-size:.875rem;color:#475569;line-height:1.7;">
+            <div>• ระบบบันทึกคำตอบทั้งหมดลง <strong>Local Storage</strong> อัตโนมัติหลังทุกการเปลี่ยนแปลง — ไม่ต้องกด Save</div>
+            <div>• ข้อมูลจะยังอยู่แม้ปิดแท็บหรือเบราว์เซอร์ (เก็บใน browser เดิม)</div>
+            <div>• กด <strong>Reset</strong> เพื่อล้างคำตอบทั้งหมด — ไม่สามารถกู้คืนได้</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 <div id="app" class="max-w-[1400px] mx-auto p-4 md:p-8 space-y-6"></div>
 <script>
 // ── DATA ──────────────────────────────────────────────────────────────────────
@@ -298,6 +400,7 @@ function renderPage(){
           <p class="text-slate-500 text-sm">แบบสอบถามสำหรับ Workshop / Presales / Scoping / SOW Input &nbsp;·&nbsp; Export JSON/CSV &nbsp;·&nbsp; Auto-save ในเบราว์เซอร์</p>
         </div>
         <div class="flex flex-wrap gap-2 shrink-0">
+          <button data-action="help" class="inline-flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> วิธีใช้งาน</button>
           <button data-action="apply-rec" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.save} Apply Industry Rec.</button>
           <button data-action="export-csv" class="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.csv} Export CSV</button>
           <button data-action="export-json" class="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.dl} Export JSON</button>
@@ -442,6 +545,7 @@ function bindEvents(){
   document.querySelectorAll('[data-action]').forEach(btn=>{
     btn.addEventListener('click',e=>{
       const a=e.currentTarget.dataset.action;
+      if(a==='help') openHelp();
       if(a==='apply-rec') applyRec();
       if(a==='export-csv') exportCSV();
       if(a==='export-json') exportJSON();
@@ -565,6 +669,17 @@ function resetAll(){
   localStorage.removeItem(STORAGE_KEY);
   renderPage();
 }
+
+// ── HELP MODAL ────────────────────────────────────────────────────────────────
+function openHelp(){
+  document.getElementById('help-modal').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+}
+function closeHelp(){
+  document.getElementById('help-modal').classList.add('hidden');
+  document.body.style.overflow='';
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeHelp(); });
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 hydrate();
