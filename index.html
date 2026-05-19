@@ -279,6 +279,7 @@ const ICON={
   save:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`,
   csv:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
   dl:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  pdf:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 15v-4"/><path d="M12 15v-6"/><path d="M15 15v-2"/></svg>`,
   reset:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.7"/></svg>`,
   search:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
   chevron:`<svg class="acc-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`,
@@ -404,6 +405,7 @@ function renderPage(){
           <button data-action="apply-rec" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.save} Apply Industry Rec.</button>
           <button data-action="export-csv" class="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.csv} Export CSV</button>
           <button data-action="export-json" class="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.dl} Export JSON</button>
+          <button data-action="export-pdf" class="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.pdf} Export PDF</button>
           <button data-action="reset" class="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.reset} Reset</button>
         </div>
       </div>
@@ -549,6 +551,7 @@ function bindEvents(){
       if(a==='apply-rec') applyRec();
       if(a==='export-csv') exportCSV();
       if(a==='export-json') exportJSON();
+      if(a==='export-pdf') exportPDF();
       if(a==='reset') resetAll();
     });
   });
@@ -668,6 +671,99 @@ function resetAll(){
   S.open=new Set(QUESTIONS.map(q=>q.s));
   localStorage.removeItem(STORAGE_KEY);
   renderPage();
+}
+
+// ── EXPORT PDF ────────────────────────────────────────────────────────────────
+function generatePrintHTML(){
+  const p=progress();
+  const secs=sections();
+  const now=new Date().toLocaleDateString('en-GB',{year:'numeric',month:'long',day:'numeric'});
+  const ind=IND_REC[S.meta.industry];
+
+  let secHTML='';
+  secs.forEach(([name,items])=>{
+    let rows='';
+    items.forEach(q=>{
+      const item=S.answers[q.id]||{};
+      const ans=Array.isArray(item.answer)?item.answer.join(', '):(item.answer||'');
+      rows+=`<div class="qrow">
+        <div class="qid">${esc(q.id)}</div>
+        <div class="qbody">
+          <div class="qtext">${esc(q.q)}</div>
+          <table class="qf">
+            <tr><td class="lbl">Customer Answer</td><td>${ans?esc(ans):'<span class="em">—</span>'}</td></tr>
+            ${item.comments?`<tr><td class="lbl">Comments</td><td>${esc(item.comments)}</td></tr>`:''}
+            ${item.decision?`<tr><td class="lbl">Design Decision</td><td><span class="bd">${esc(item.decision)}</span></td></tr>`:''}
+            ${item.policy?`<tr><td class="lbl">Recommended Policy</td><td><span class="bp">${esc(item.policy)}</span></td></tr>`:''}
+          </table>
+        </div>
+      </div>`;
+    });
+    const done=items.filter(answered).length;
+    secHTML+=`<div class="sec">
+      <div class="sec-hd"><span>${esc(name)}</span><span class="sec-ct">${done}/${items.length}</span></div>
+      ${rows}
+    </div>`;
+  });
+
+  return `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<title>DLP Assessment — ${esc(S.meta.customerName||'Report')}</title>
+<style>
+@page{margin:18mm 15mm;size:A4}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:9.5pt;color:#1e293b;line-height:1.5}
+.cover{margin-bottom:20pt;padding-bottom:14pt;border-bottom:2pt solid #0ea5e9}
+h1{font-size:17pt;font-weight:700;color:#0c4a6e;margin-bottom:6pt;display:flex;align-items:center;gap:6pt}
+.sub{font-size:9pt;color:#64748b;margin-bottom:10pt}
+.meta{width:100%;border-collapse:collapse;font-size:9pt}
+.meta td{padding:3.5pt 8pt}.meta td:first-child{font-weight:600;color:#475569;width:140pt}
+.meta tr:nth-child(even) td{background:#f8fafc}
+.prog{display:inline-block;background:#e0f2fe;color:#0369a1;font-size:8pt;font-weight:700;padding:2pt 8pt;border-radius:999pt}
+.sec{margin-bottom:16pt;page-break-inside:avoid}
+.sec-hd{font-size:10.5pt;font-weight:700;color:#0c4a6e;background:#f0f9ff;border-left:3pt solid #0ea5e9;padding:4pt 8pt;margin-bottom:6pt;display:flex;justify-content:space-between;align-items:center}
+.sec-ct{font-size:8pt;font-weight:600;background:#e0f2fe;color:#0369a1;padding:1pt 7pt;border-radius:999pt}
+.qrow{display:flex;gap:8pt;margin-bottom:6pt;border:0.5pt solid #e2e8f0;border-radius:5pt;padding:7pt;page-break-inside:avoid}
+.qrow:nth-child(even){background:#fafafa}
+.qid{font-size:8pt;font-weight:700;color:#0ea5e9;min-width:22pt;padding-top:1pt}
+.qbody{flex:1}
+.qtext{font-weight:600;font-size:9pt;margin-bottom:4pt}
+.qf{width:100%;border-collapse:collapse}
+.qf td{padding:1.5pt 6pt;font-size:8.5pt;vertical-align:top}
+.qf td.lbl{font-weight:600;color:#64748b;width:110pt}
+.em{color:#94a3b8}
+.bd{background:#dcfce7;color:#166534;padding:1pt 5pt;border-radius:999pt;font-size:8pt;font-weight:600}
+.bp{background:#ede9fe;color:#5b21b6;padding:1pt 5pt;border-radius:999pt;font-size:8pt;font-weight:600}
+.ind-box{margin-top:10pt;padding:6pt 10pt;background:#f0fdf4;border:0.5pt solid #bbf7d0;border-radius:5pt;font-size:8.5pt}
+.ind-box strong{color:#166534}
+footer{margin-top:20pt;border-top:0.5pt solid #e2e8f0;padding-top:6pt;font-size:7.5pt;color:#94a3b8;text-align:center}
+@media print{.sec{page-break-inside:avoid}}
+</style></head><body>
+<div class="cover">
+  <h1>&#128737; DLP Implement Assessment</h1>
+  <div class="sub">Assessment Report — generated ${now}</div>
+  <table class="meta">
+    <tr><td>Customer Name</td><td>${esc(S.meta.customerName)||'—'}</td></tr>
+    <tr><td>Customer Industry</td><td>${esc(S.meta.industry)||'—'}</td></tr>
+    <tr><td>Next Step</td><td>${esc(S.meta.stage)||'—'}</td></tr>
+    <tr><td>Assessment Date</td><td>${esc(S.meta.date)||'—'}</td></tr>
+    <tr><td>Prepared By</td><td>${esc(S.meta.preparedBy)||'—'}</td></tr>
+    <tr><td>Completion</td><td><span class="prog">${p.done} / ${p.total} &nbsp;(${p.pct}%)</span></td></tr>
+  </table>
+  ${ind?`<div class="ind-box"><strong>Industry Recommendation:</strong> ${esc(ind.decision)} &nbsp;|&nbsp; ${esc(ind.policy)} &nbsp;—&nbsp; ${ind.notes.join(' · ')}</div>`:''}
+</div>
+${secHTML}
+<footer>DLP Implement Assessment &nbsp;·&nbsp; ${esc(S.meta.customerName||'')} &nbsp;·&nbsp; ${now}</footer>
+</body></html>`;
+}
+
+function exportPDF(){
+  const html=generatePrintHTML();
+  const win=window.open('','_blank','width=900,height=700');
+  if(!win){ alert('Pop-up blocked. Please allow pop-ups for this site and try again.'); return; }
+  win.document.write(html);
+  win.document.close();
+  win.addEventListener('load',()=>{ setTimeout(()=>win.print(),400); });
 }
 
 // ── HELP MODAL ────────────────────────────────────────────────────────────────
