@@ -134,7 +134,6 @@
           <div style="font-weight:600;margin-bottom:.35rem;">Export ข้อมูล</div>
           <div style="font-size:.875rem;color:#475569;line-height:1.8;">
             <div>• <strong>Export CSV</strong> — ดาวน์โหลดไฟล์ .csv รองรับ Excel / Google Sheets (มี BOM สำหรับภาษาไทย)</div>
-            <div>• <strong>Export JSON</strong> — ดาวน์โหลดไฟล์ .json สำหรับประมวลผลต่อหรือ import กลับ</div>
             <div>• <strong>Export PDF</strong> — เปิด print window ที่จัดรูปแบบ A4 พร้อมข้อมูลครบทุก section แล้วกด <em>Save as PDF</em> ในหน้าต่าง Print (browser ต้องอนุญาต pop-up)</div>
           </div>
         </div>
@@ -154,7 +153,7 @@
 
       <!-- Tip -->
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:.75rem 1rem;margin-top:.5rem;font-size:.82rem;color:#64748b;line-height:1.6;">
-        <strong>💡 เคล็ดลับ:</strong> ใช้ Filter <em>"Open"</em> เพื่อโฟกัสเฉพาะคำถามที่ยังไม่ตอบ · Export JSON แล้ว share ให้ทีมอื่น import กลับเข้าระบบได้ · Export PDF ก่อน Reset เพื่อเก็บ snapshot
+        <strong>💡 เคล็ดลับ:</strong> ใช้ Filter <em>"Open"</em> เพื่อโฟกัสเฉพาะคำถามที่ยังไม่ตอบ · Export CSV เพื่อแชร์ให้ทีมใน Excel · Export PDF ก่อน Reset เพื่อเก็บ snapshot
       </div>
 
     </div>
@@ -477,13 +476,12 @@ function renderPage(){
           <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-3 mb-1">
             ${ICON.shield} DLP Implement Assessment
           </h1>
-          <p class="text-slate-500 text-sm">แบบสอบถามสำหรับ Workshop / Presales / Scoping / SOW Input &nbsp;·&nbsp; Export JSON/CSV &nbsp;·&nbsp; Auto-save ในเบราว์เซอร์</p>
+          <p class="text-slate-500 text-sm">แบบสอบถามสำหรับ Workshop / Presales / Scoping / SOW Input &nbsp;·&nbsp; Export CSV / PDF &nbsp;·&nbsp; Auto-save ในเบราว์เซอร์</p>
         </div>
         <div class="flex flex-wrap gap-2 shrink-0">
           <button data-action="help" class="inline-flex items-center gap-1.5 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> วิธีใช้งาน</button>
           <button data-action="apply-rec" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.save} Apply Industry Rec.</button>
           <button data-action="export-csv" class="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.csv} Export CSV</button>
-          <button data-action="export-json" class="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.dl} Export JSON</button>
           <button data-action="export-pdf" class="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.pdf} Export PDF</button>
           <button data-action="reset" class="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.reset} Reset</button>
         </div>
@@ -633,7 +631,6 @@ function bindEvents(){
       if(a==='help') openHelp();
       if(a==='apply-rec') applyRec();
       if(a==='export-csv') exportCSV();
-      if(a==='export-json') exportJSON();
       if(a==='export-pdf') exportPDF();
       if(a==='reset') resetAll();
     });
@@ -718,11 +715,6 @@ function dlFile(name,content,mime){
   const a=document.createElement('a');
   a.href=url; a.download=name; a.click();
   URL.revokeObjectURL(url);
-}
-
-function exportJSON(){
-  const name=`dlp_assessment_${(S.meta.customerName||'customer').replace(/\s+/g,'_')}.json`;
-  dlFile(name,JSON.stringify({meta:S.meta,answers:S.answers},null,2),'application/json');
 }
 
 function exportCSV(){
