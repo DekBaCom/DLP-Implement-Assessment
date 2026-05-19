@@ -39,17 +39,23 @@
     <div style="padding:1.5rem 1.75rem;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;border-radius:24px 24px 0 0;">
       <div>
         <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:.15rem;">วิธีใช้งาน</h2>
-        <p style="font-size:.85rem;color:#64748b;">DLP Implement Assessment — คู่มือการใช้งาน</p>
+        <p style="font-size:.85rem;color:#64748b;">DLP Implement Assessment — คู่มือการใช้งานฉบับสมบูรณ์</p>
       </div>
       <button onclick="closeHelp()" style="width:36px;height:36px;border-radius:50%;border:1px solid #e2e8f0;background:#f8fafc;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#64748b;" title="ปิด">✕</button>
     </div>
     <div style="padding:1rem 1.75rem 1.75rem;">
 
+      <!-- Overview banner -->
+      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:.85rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#0369a1;line-height:1.6;">
+        <strong>เครื่องมือนี้ใช้สำหรับ</strong> Workshop · Presales · Scoping · SOW Input<br>
+        รองรับ 10 หมวดคำถาม · 57 ข้อ · บันทึกอัตโนมัติ · Export CSV / JSON / PDF
+      </div>
+
       <div class="help-step">
         <div class="help-num">1</div>
         <div>
           <div style="font-weight:600;margin-bottom:.35rem;">กรอกข้อมูลพื้นฐาน (Metadata)</div>
-          <p style="font-size:.875rem;color:#475569;line-height:1.6;">ระบุ <strong>Customer Name, Customer Industry, Next Step, Assessment Date</strong> และ <strong>Prepared By</strong> ที่แถบด้านบน ข้อมูลเหล่านี้จะปรากฏใน CSV/JSON ที่ export ออกไป และใช้ระบุ Industry Recommendation ด้วย</p>
+          <p style="font-size:.875rem;color:#475569;line-height:1.6;">ระบุ <strong>Customer Name, Customer Industry, Next Step, Assessment Date</strong> และ <strong>Prepared By</strong> ที่แถบด้านบน ข้อมูลเหล่านี้จะปรากฏในทุก format ที่ export และใช้ขับเคลื่อน Industry Recommendation อัตโนมัติ</p>
         </div>
       </div>
 
@@ -57,10 +63,10 @@
         <div class="help-num">2</div>
         <div>
           <div style="font-weight:600;margin-bottom:.45rem;">ประเภทคำถาม</div>
-          <div style="font-size:.875rem;color:#475569;line-height:1.7;">
-            <div style="margin-bottom:.4rem;"><span class="help-tag" style="background:#e0f2fe;color:#0369a1;">select</span> เลือกตัวเลือกเดียวจาก dropdown</div>
-            <div style="margin-bottom:.4rem;"><span class="help-tag" style="background:#dcfce7;color:#166534;">multiselect</span> เลือกได้หลายตัวเลือกโดยติ๊ก checkbox</div>
-            <div style="margin-bottom:.4rem;"><span class="help-tag" style="background:#fef3c7;color:#92400e;">textarea</span> พิมพ์คำตอบแบบอิสระ เหมาะสำหรับบันทึก scope หรือ criteria</div>
+          <div style="font-size:.875rem;color:#475569;line-height:1.8;">
+            <div style="margin-bottom:.35rem;"><span class="help-tag" style="background:#e0f2fe;color:#0369a1;">select</span> เลือกตัวเลือกเดียวจาก dropdown</div>
+            <div style="margin-bottom:.35rem;"><span class="help-tag" style="background:#dcfce7;color:#166534;">multiselect</span> เลือกได้หลายตัวเลือกโดยติ๊ก checkbox (นับเป็น "ตอบแล้ว" เมื่อเลือกอย่างน้อย 1 ตัว)</div>
+            <div style="margin-bottom:.35rem;"><span class="help-tag" style="background:#fef3c7;color:#92400e;">textarea</span> พิมพ์คำตอบแบบอิสระ เช่น scope, criteria, รายชื่อ</div>
             <div><span class="help-tag" style="background:#f3e8ff;color:#6b21a8;">text</span> พิมพ์ข้อความสั้น เช่น จำนวน user</div>
           </div>
         </div>
@@ -69,12 +75,12 @@
       <div class="help-step">
         <div class="help-num">3</div>
         <div>
-          <div style="font-weight:600;margin-bottom:.35rem;">ฟิลด์แต่ละคำถาม</div>
-          <div style="font-size:.875rem;color:#475569;line-height:1.7;">
-            <div>• <strong>Customer Answer</strong> — คำตอบที่ได้จาก workshop หรือ customer</div>
-            <div>• <strong>Comments &amp; Notes</strong> — บันทึกเพิ่มเติม ข้อสมมติ ความเสี่ยง dependency</div>
-            <div>• <strong>Design Decision</strong> — ผลการตัดสินใจ เช่น Enforce - Block, Enable (Baseline)</div>
-            <div>• <strong>Recommended DLP Policy</strong> — Policy ที่แนะนำสำหรับ use case นี้ เช่น EXO DLP, Endpoint DLP</div>
+          <div style="font-weight:600;margin-bottom:.35rem;">ฟิลด์ในแต่ละคำถาม</div>
+          <div style="font-size:.875rem;color:#475569;line-height:1.8;">
+            <div>• <strong>Customer Answer</strong> — คำตอบที่ได้จาก workshop หรือ customer interview</div>
+            <div>• <strong>Comments &amp; Notes</strong> — บันทึกข้อสมมติ ความเสี่ยง dependency หรือ action item</div>
+            <div>• <strong>Design Decision</strong> — ผลการตัดสินใจ เช่น <em>Enforce - Block, Enable (Baseline), In Scope</em></div>
+            <div>• <strong>Recommended DLP Policy</strong> — Policy ที่แนะนำ เช่น <em>EXO DLP, Endpoint DLP, Sensitivity Labels</em></div>
           </div>
         </div>
       </div>
@@ -82,8 +88,17 @@
       <div class="help-step">
         <div class="help-num">4</div>
         <div>
-          <div style="font-weight:600;margin-bottom:.35rem;">License Suggestion (อัตโนมัติ)</div>
-          <p style="font-size:.875rem;color:#475569;line-height:1.6;">การ์ด <strong>"License Suggestion"</strong> จะอัพเดตแบบ real-time ตามคำตอบที่กรอก — หากเลือกฟีเจอร์ที่ต้องการ <strong>M365 E5 หรือ Purview Add-on</strong> (เช่น Endpoint DLP, EDM, Auto-labeling, Copilot DLP) ระบบจะแจ้งและแสดงเหตุผลทันที</p>
+          <div style="font-weight:600;margin-bottom:.35rem;">License Suggestion — อัตโนมัติ Real-time</div>
+          <p style="font-size:.875rem;color:#475569;line-height:1.6;">การ์ด <strong>"License Suggestion"</strong> ตรวจจับฟีเจอร์ที่ต้องใช้ license สูงกว่า E3 จากคำตอบที่กรอก และแสดงผลทันที:</p>
+          <div style="font-size:.82rem;color:#475569;margin-top:.5rem;line-height:1.8;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.6rem .85rem;">
+            <div>▸ <strong>Endpoint DLP</strong> (Windows/macOS) → M365 E5 / Purview Add-on</div>
+            <div>▸ <strong>Exact Data Match (EDM)</strong> → M365 E5 / Purview Add-on</div>
+            <div>▸ <strong>Auto-labeling</strong> → M365 E5 / Purview Add-on</div>
+            <div>▸ <strong>Activity Explorer &amp; Data Explorer</strong> → M365 E5 / Purview Add-on</div>
+            <div>▸ <strong>Approval Workflow</strong> → M365 E5 / Purview Add-on</div>
+            <div>▸ <strong>Microsoft 365 Copilot DLP</strong> → M365 Copilot Add-on</div>
+          </div>
+          <p style="font-size:.82rem;color:#64748b;margin-top:.4rem;">หากไม่มีฟีเจอร์พิเศษ การ์ดจะแสดง <strong style="color:#166534;">M365 E3 เพียงพอ</strong> (สีเขียว)</p>
         </div>
       </div>
 
@@ -91,7 +106,12 @@
         <div class="help-num">5</div>
         <div>
           <div style="font-weight:600;margin-bottom:.35rem;">Apply Industry Recommendation</div>
-          <p style="font-size:.875rem;color:#475569;line-height:1.6;">เลือก <strong>Customer Industry</strong> ก่อน แล้วกดปุ่ม <strong>"Apply Industry Rec."</strong> ระบบจะเติม Design Decision และ Recommended Policy ที่เหมาะกับอุตสาหกรรมนั้นในทุกคำถามที่ยังไม่ได้ตอบ (ไม่ทับค่าที่กรอกไปแล้ว)</p>
+          <p style="font-size:.875rem;color:#475569;line-height:1.6;">เลือก <strong>Customer Industry</strong> ก่อน แล้วกดปุ่ม <strong>"Apply Industry Rec."</strong> — ระบบจะเติม <em>Design Decision</em> และ <em>Recommended Policy</em> ที่เหมาะสมตามอุตสาหกรรมในทุกคำถามที่ยังว่างอยู่ (ไม่ทับค่าที่กรอกไปแล้ว)</p>
+          <div style="font-size:.82rem;color:#475569;margin-top:.5rem;display:flex;flex-wrap:wrap;gap:.4rem;">
+            <span style="background:#e0f2fe;color:#0369a1;padding:.15rem .6rem;border-radius:999px;font-weight:600;">Banking &amp; Financial → Enforce - Block</span>
+            <span style="background:#dcfce7;color:#166534;padding:.15rem .6rem;border-radius:999px;font-weight:600;">Government → Enforce - Warn</span>
+            <span style="background:#fef3c7;color:#92400e;padding:.15rem .6rem;border-radius:999px;font-weight:600;">Manufacturing → Enable (Baseline)</span>
+          </div>
         </div>
       </div>
 
@@ -99,10 +119,11 @@
         <div class="help-num">6</div>
         <div>
           <div style="font-weight:600;margin-bottom:.35rem;">Search &amp; Filter</div>
-          <div style="font-size:.875rem;color:#475569;line-height:1.7;">
-            <div>• <strong>Search</strong> — ค้นหาคำถามด้วย keyword หรือชื่อ section</div>
-            <div>• <strong>All / Done / Open</strong> — กรองแสดงเฉพาะคำถามทั้งหมด / ที่ตอบแล้ว / ที่ยังไม่ตอบ</div>
-            <div>• แถบ <strong>Sections</strong> ด้านซ้ายแสดง progress แต่ละ section (ตอบแล้ว/ทั้งหมด)</div>
+          <div style="font-size:.875rem;color:#475569;line-height:1.8;">
+            <div>• <strong>Search</strong> — พิมพ์ keyword เพื่อกรองคำถาม หรือใช้ชื่อ section (เช่น "endpoint", "5.6")</div>
+            <div>• <strong>All / Done / Open</strong> — แสดงทั้งหมด / เฉพาะที่ตอบแล้ว / เฉพาะที่ยังไม่ตอบ</div>
+            <div>• แถบ <strong>Sections</strong> ซ้ายมือแสดง progress badge แต่ละ section (ตอบแล้ว / ทั้งหมด)</div>
+            <div>• คลิกหัว section เพื่อย่อ/ขยาย accordion</div>
           </div>
         </div>
       </div>
@@ -111,9 +132,10 @@
         <div class="help-num">7</div>
         <div>
           <div style="font-weight:600;margin-bottom:.35rem;">Export ข้อมูล</div>
-          <div style="font-size:.875rem;color:#475569;line-height:1.7;">
-            <div>• <strong>Export CSV</strong> — ดาวน์โหลดไฟล์ .csv เปิดได้ใน Excel / Google Sheets พร้อม BOM สำหรับภาษาไทย</div>
-            <div>• <strong>Export JSON</strong> — ดาวน์โหลดไฟล์ .json สำหรับนำไปประมวลผลหรือ import ต่อ</div>
+          <div style="font-size:.875rem;color:#475569;line-height:1.8;">
+            <div>• <strong>Export CSV</strong> — ดาวน์โหลดไฟล์ .csv รองรับ Excel / Google Sheets (มี BOM สำหรับภาษาไทย)</div>
+            <div>• <strong>Export JSON</strong> — ดาวน์โหลดไฟล์ .json สำหรับประมวลผลต่อหรือ import กลับ</div>
+            <div>• <strong>Export PDF</strong> — เปิด print window ที่จัดรูปแบบ A4 พร้อมข้อมูลครบทุก section แล้วกด <em>Save as PDF</em> ในหน้าต่าง Print (browser ต้องอนุญาต pop-up)</div>
           </div>
         </div>
       </div>
@@ -122,12 +144,17 @@
         <div class="help-num">8</div>
         <div>
           <div style="font-weight:600;margin-bottom:.35rem;">Auto-save &amp; Reset</div>
-          <div style="font-size:.875rem;color:#475569;line-height:1.7;">
-            <div>• ระบบบันทึกคำตอบทั้งหมดลง <strong>Local Storage</strong> อัตโนมัติหลังทุกการเปลี่ยนแปลง — ไม่ต้องกด Save</div>
-            <div>• ข้อมูลจะยังอยู่แม้ปิดแท็บหรือเบราว์เซอร์ (เก็บใน browser เดิม)</div>
-            <div>• กด <strong>Reset</strong> เพื่อล้างคำตอบทั้งหมด — ไม่สามารถกู้คืนได้</div>
+          <div style="font-size:.875rem;color:#475569;line-height:1.8;">
+            <div>• ระบบบันทึกคำตอบทั้งหมดลง <strong>Local Storage</strong> อัตโนมัติหลังทุก keystroke — ไม่ต้องกด Save</div>
+            <div>• ข้อมูลจะยังคงอยู่แม้ปิดแท็บหรือ browser (ใช้งานได้บน browser เดิมเท่านั้น)</div>
+            <div>• <strong>Reset</strong> — ล้างคำตอบทั้งหมดและ Local Storage ทันที ไม่สามารถกู้คืนได้</div>
           </div>
         </div>
+      </div>
+
+      <!-- Tip -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:.75rem 1rem;margin-top:.5rem;font-size:.82rem;color:#64748b;line-height:1.6;">
+        <strong>💡 เคล็ดลับ:</strong> ใช้ Filter <em>"Open"</em> เพื่อโฟกัสเฉพาะคำถามที่ยังไม่ตอบ · Export JSON แล้ว share ให้ทีมอื่น import กลับเข้าระบบได้ · Export PDF ก่อน Reset เพื่อเก็บ snapshot
       </div>
 
     </div>
