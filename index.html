@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DLP Implement Assessment</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; }
+    .fi { width:100%; padding:8px 12px; border:1px solid #e2e8f0; border-radius:12px; font-size:14px; color:#1e293b; background:#fff; outline:none; transition:border-color .15s,box-shadow .15s; }
+    .fi:focus { border-color:#94a3b8; box-shadow:0 0 0 3px rgba(148,163,184,.15); }
+    textarea.fi { resize:vertical; min-height:88px; }
+    select.fi { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:32px; }
+    .acc-body { display:none; }
+    .acc-body.open { display:block; }
+    .acc-chevron { transition:transform .2s ease; }
+    .acc-chevron.open { transform:rotate(180deg); }
+    input[type=checkbox] { accent-color:#0ea5e9; width:16px; height:16px; cursor:pointer; flex-shrink:0; margin-top:2px; }
+    .qtab { transition:background .15s,color .15s,box-shadow .15s; }
+    .progress-fill { transition:width .4s ease; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    .qcard { animation:fadeUp .25s ease; }
+    @media(min-width:1024px){ .sidebar-sticky{position:sticky;top:16px;} }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900">
+<div id="app" class="max-w-[1400px] mx-auto p-4 md:p-8 space-y-6"></div>
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const INDUSTRIES=['Banking & Financial','Government','State Enterprise','Manufacturing & Industry','Other Enterprise'];
+const STAGES=['POC','Pilot','Production'];
+const YES_NO=['Yes','No'];
+const YES_NO_PARTIAL=['Yes','No','Partial'];
+const LICENSES=['M365 E3','M365 E5','Purview Add-on','Other'];
+const START_MODE=['Test mode / Audit only','Warn','Block'];
+const OVERRIDE=['No override','Allow with justification','Manager only','Security approval only'];
+const OWNERS=['IT','Security','Compliance','Business Owner','Shared'];
+const REVIEW=['Weekly','Monthly','Quarterly','Ad-hoc'];
+const DESIGN_DECISIONS=['In Scope','Out of Scope','Enable (Baseline)','Enable (Pilot/Test)','Enforce - Warn','Enforce - Block','Allow with Justification','Allow with Business Exception','Needs Customer Approval','Needs Microsoft License Upgrade','Requires Custom SIT/EDM','Requires Change Management/Training'];
+const REC_POLICIES=['EXO DLP','SharePoint & OneDrive DLP','Teams DLP','Endpoint DLP','Sensitivity Labels','Auto-labeling','Exact Data Match (EDM)','Policy Tip','Override with Justification','Approval Workflow','Activity Explorer & Data Explorer','Copilot DLP','Training & Awareness'];
+
+const QUESTIONS=[
+  {s:'1. Project Scope & Objective',id:'1.1',q:'What is the primary objective of this project?',t:'multiselect',o:['Prevent data leakage','Compliance & audit','Control external sharing','Protect Copilot & Chat']},
+  {s:'1. Project Scope & Objective',id:'1.2',q:'What implementation stage is required for this phase?',t:'select',o:STAGES},
+  {s:'1. Project Scope & Objective',id:'1.3',q:'Which workloads are in scope?',t:'multiselect',o:['Exchange Online','SharePoint Online','OneDrive','Teams','Endpoint','Microsoft 365 Copilot & Copilot Chat']},
+  {s:'1. Project Scope & Objective',id:'1.4',q:'What is out of scope for this phase?',t:'textarea',g:'Document exclusions clearly'},
+  {s:'1. Project Scope & Objective',id:'1.5',q:'What are the customer success criteria for sign-off?',t:'textarea',g:'Define measurable outcomes'},
+  {s:'2. Current Environment & Licensing',id:'2.1',q:'What Microsoft 365 license is currently assigned?',t:'select',o:LICENSES},
+  {s:'2. Current Environment & Licensing',id:'2.2',q:'How many total users are in scope for implementation?',t:'text',g:'Enter user count'},
+  {s:'2. Current Environment & Licensing',id:'2.3',q:'Will DLP be implemented for all users or selected groups first?',t:'textarea',g:'All users or pilot groups'},
+  {s:'2. Current Environment & Licensing',id:'2.4',q:'Does the organization have multi-tenant, subsidiary, or separate domain requirements?',t:'select',o:YES_NO},
+  {s:'2. Current Environment & Licensing',id:'2.5',q:'Are there any license limitations that may affect Endpoint DLP, EDM, or Auto-labeling?',t:'select',o:YES_NO},
+  {s:'2. Current Environment & Licensing',id:'2.6',q:'Which workloads are already actively used in production?',t:'multiselect',o:['Exchange Online','SharePoint Online','OneDrive','Teams','Endpoint']},
+  {s:'3. Data Classification & Sensitive Information',id:'3.1',q:'Does the organization already have a data classification scheme?',t:'select',o:YES_NO_PARTIAL},
+  {s:'3. Data Classification & Sensitive Information',id:'3.2',q:'Which classification levels are used today?',t:'multiselect',o:['Public','Internal','Confidential','Secret','Top Secret']},
+  {s:'3. Data Classification & Sensitive Information',id:'3.3',q:'Are sensitivity labels already deployed?',t:'select',o:YES_NO_PARTIAL},
+  {s:'3. Data Classification & Sensitive Information',id:'3.4',q:'Is a default sensitivity label required?',t:'select',o:YES_NO},
+  {s:'3. Data Classification & Sensitive Information',id:'3.5',q:'Is auto-labeling required?',t:'select',o:YES_NO},
+  {s:'3. Data Classification & Sensitive Information',id:'3.6',q:'What sensitive data types must be protected?',t:'multiselect',o:['PII','Financial data','Customer data','Employee data','Legal & contract data','Internal confidential data']},
+  {s:'3. Data Classification & Sensitive Information',id:'3.7',q:'Is a custom Sensitive Information Type or Exact Data Match (EDM) required?',t:'select',o:YES_NO},
+  {s:'3. Data Classification & Sensitive Information',id:'3.8',q:'Where is sensitive data most commonly stored or transmitted?',t:'multiselect',o:['Email body','Email attachment','SharePoint files','OneDrive files','Teams shared files','Endpoint copy/upload']},
+  {s:'4. User Groups, Departments & Policy Targeting',id:'4.1',q:'Will policy apply to all users or specific departments / groups?',t:'textarea',g:'Document the targeting approach'},
+  {s:'4. User Groups, Departments & Policy Targeting',id:'4.2',q:'Which groups are the priority for phase 1?',t:'multiselect',o:['Finance','HR','Legal','Executive','Operations','All Users','Other']},
+  {s:'4. User Groups, Departments & Policy Targeting',id:'4.3',q:'Are there any groups that require business exceptions or alternate handling?',t:'select',o:YES_NO},
+  {s:'4. User Groups, Departments & Policy Targeting',id:'4.4',q:'Are pilot / test users already identified?',t:'select',o:YES_NO},
+  {s:'4. User Groups, Departments & Policy Targeting',id:'4.5',q:'Who will be the approver or business owner for each unit?',t:'textarea',g:'List approvers & owners'},
+  {s:'5. DLP Use Cases',id:'5.1',q:'Which email scenarios must be controlled?',t:'multiselect',o:['Internal to Internal','Internal to External','Forward','Reply']},
+  {s:'5. DLP Use Cases',id:'5.2',q:'What action should occur when sensitive information is found in email?',t:'multiselect',o:['Audit only','Warn','Block','Encrypt','Approval workflow']},
+  {s:'5. DLP Use Cases',id:'5.3',q:'Should external sharing from SharePoint & OneDrive be controlled?',t:'select',o:YES_NO},
+  {s:'5. DLP Use Cases',id:'5.4',q:'Can files labeled Confidential / Secret be shared externally?',t:'textarea',g:'Define allowed & disallowed scenarios'},
+  {s:'5. DLP Use Cases',id:'5.5',q:'Should Teams sharing be controlled?',t:'select',o:YES_NO},
+  {s:'5. DLP Use Cases',id:'5.6',q:'Which endpoint scenarios must be monitored or blocked?',t:'multiselect',o:['Copy to USB','Upload to browser/web app','Paste to app','Print','Clipboard']},
+  {s:'5. DLP Use Cases',id:'5.7',q:'Which endpoint operating systems are in scope?',t:'multiselect',o:['Windows','macOS']},
+  {s:'5. DLP Use Cases',id:'5.8',q:'Is DLP protection required for Microsoft 365 Copilot & Copilot Chat?',t:'select',o:YES_NO},
+  {s:'5. DLP Use Cases',id:'5.9',q:'Should prompts with sensitive information or files with restricted labels be blocked in Copilot scenarios?',t:'select',o:YES_NO},
+  {s:'6. Enforcement Model & Override',id:'6.1',q:'What is the starting mode for policy enforcement?',t:'select',o:START_MODE},
+  {s:'6. Enforcement Model & Override',id:'6.2',q:'Should policy tips be shown to users?',t:'select',o:YES_NO},
+  {s:'6. Enforcement Model & Override',id:'6.3',q:'Is override allowed?',t:'select',o:OVERRIDE},
+  {s:'6. Enforcement Model & Override',id:'6.4',q:'If override is allowed, what business justification is required?',t:'textarea',g:'Document justification requirements'},
+  {s:'6. Enforcement Model & Override',id:'6.5',q:'How long should business exceptions remain valid?',t:'textarea',g:'Document expiry & review period'},
+  {s:'7. Alert, Approval & Incident Handling',id:'7.1',q:'Who should receive DLP incident notifications?',t:'multiselect',o:['User','IT Admin','Security Team','Compliance Officer','Manager','Other']},
+  {s:'7. Alert, Approval & Incident Handling',id:'7.2',q:'Is an approval workflow required?',t:'select',o:YES_NO},
+  {s:'7. Alert, Approval & Incident Handling',id:'7.3',q:'Who is the primary and backup approver?',t:'textarea',g:'Document names & roles'},
+  {s:'7. Alert, Approval & Incident Handling',id:'7.4',q:'How should incident reports be delivered?',t:'multiselect',o:['Email','Dashboard','Export report','Ticket / SIEM (if used)']},
+  {s:'7. Alert, Approval & Incident Handling',id:'7.5',q:'Should severity or priority differ by data type?',t:'select',o:YES_NO},
+  {s:'7. Alert, Approval & Incident Handling',id:'7.6',q:'Is an incident response playbook required?',t:'select',o:YES_NO},
+  {s:'8. Monitoring, Reporting & Validation',id:'8.1',q:'Which reporting outputs are required?',t:'multiselect',o:['Executive summary','Technical incident detail','Policy hit trend','Dashboard','Export report']},
+  {s:'8. Monitoring, Reporting & Validation',id:'8.2',q:'Who will review DLP alerts on a daily / weekly basis?',t:'textarea',g:'Document operational owner'},
+  {s:'8. Monitoring, Reporting & Validation',id:'8.3',q:'Should Activity Explorer & Data Explorer be used for validation?',t:'select',o:YES_NO},
+  {s:'8. Monitoring, Reporting & Validation',id:'8.4',q:'Should false positives & false negatives be formally tracked?',t:'select',o:YES_NO},
+  {s:'8. Monitoring, Reporting & Validation',id:'8.5',q:'What is the policy tuning frequency after implementation?',t:'select',o:REVIEW},
+  {s:'8. Monitoring, Reporting & Validation',id:'8.6',q:'Is a formal UAT / test case checklist required?',t:'select',o:YES_NO},
+  {s:'9. Compliance, Audit & Retention',id:'9.1',q:'Which compliance obligations must this solution support?',t:'multiselect',o:['PDPA','ISO 27001','BOT & regulator','Internal policy','Other']},
+  {s:'9. Compliance, Audit & Retention',id:'9.2',q:'How long must logs and incident reports be retained?',t:'textarea',g:'Document retention period'},
+  {s:'9. Compliance, Audit & Retention',id:'9.3',q:'What audit evidence is required?',t:'multiselect',o:['Screenshot','Policy export','Incident log','Test result & sign-off']},
+  {s:'9. Compliance, Audit & Retention',id:'9.4',q:'Is segregation of duties required between IT, Security, and Compliance?',t:'select',o:YES_NO},
+  {s:'9. Compliance, Audit & Retention',id:'9.5',q:'Is formal change approval required before enabling block mode?',t:'select',o:YES_NO},
+  {s:'10. Testing, Rollout & Adoption',id:'10.1',q:'How many rollout phases are planned?',t:'multiselect',o:STAGES},
+  {s:'10. Testing, Rollout & Adoption',id:'10.2',q:'Which group will be included in the first rollout wave?',t:'textarea',g:'Document pilot & wave 1 group'},
+  {s:'10. Testing, Rollout & Adoption',id:'10.3',q:'Is end-user awareness training required?',t:'select',o:YES_NO},
+  {s:'10. Testing, Rollout & Adoption',id:'10.4',q:'Is admin training or operational handover required?',t:'select',o:YES_NO},
+  {s:'10. Testing, Rollout & Adoption',id:'10.5',q:'Which deliverables are required at project closure?',t:'multiselect',o:['Final configuration document','Admin guide','Test result','Tuning recommendation','Training materials','Other']},
+  {s:'10. Testing, Rollout & Adoption',id:'10.6',q:'Who will own the service after handover?',t:'select',o:OWNERS},
+  {s:'10. Testing, Rollout & Adoption',id:'10.7',q:'Are there any change freeze periods or rollout blackout windows?',t:'select',o:YES_NO},
+];
+
+const IND_REC={
+  'Banking & Financial':{decision:'Enforce - Block',policy:'EXO DLP',notes:['Prioritize regulated data handling','Use stricter external sharing and override control']},
+  'Government':{decision:'Enforce - Warn',policy:'Sensitivity Labels',notes:['Focus on classification and approval path','Use formal evidence for audit and sign-off']},
+  'State Enterprise':{decision:'Enable (Pilot/Test)',policy:'SharePoint & OneDrive DLP',notes:['Roll out in phases with validation','Prepare governance ownership early']},
+  'Manufacturing & Industry':{decision:'Enable (Baseline)',policy:'Endpoint DLP',notes:['Focus on file movement and external transfer','Tune false positives before block mode']},
+  'Other Enterprise':{decision:'Enable (Pilot/Test)',policy:'Teams DLP',notes:['Start with highest-risk workloads','Use awareness and policy tips to reduce friction']},
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+const STORAGE_KEY='dlp-assess-v1';
+
+function blankAnswers(){
+  const a={};
+  QUESTIONS.forEach(q=>{ a[q.id]={answer:q.t==='multiselect'?[]:'',comments:'',decision:'',policy:''}; });
+  return a;
+}
+
+let S={
+  meta:{customerName:'',industry:'',stage:'',date:'',preparedBy:''},
+  answers:blankAnswers(),
+  search:'',
+  filter:'all',
+  open:new Set(QUESTIONS.map(q=>q.s))
+};
+
+function persist(){ localStorage.setItem(STORAGE_KEY,JSON.stringify({meta:S.meta,answers:S.answers})); }
+
+function hydrate(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const p=JSON.parse(raw);
+    if(p.meta) S.meta={...S.meta,...p.meta};
+    if(p.answers) S.answers={...S.answers,...p.answers};
+  }catch(e){}
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function answered(q){
+  const a=S.answers[q.id]?.answer;
+  return Array.isArray(a)?a.length>0:String(a??'').trim()!=='';
+}
+
+function sections(){
+  const m={};
+  QUESTIONS.forEach(q=>{ if(!m[q.s]) m[q.s]=[]; m[q.s].push(q); });
+  return Object.entries(m);
+}
+
+function progress(){
+  const total=QUESTIONS.length;
+  const done=QUESTIONS.filter(answered).length;
+  return {total,done,pct:Math.round(done/total*100)};
+}
+
+function visible(q){
+  const s=S.search.trim().toLowerCase();
+  if(s&&!q.q.toLowerCase().includes(s)&&!q.id.includes(s)&&!q.s.toLowerCase().includes(s)) return false;
+  if(S.filter==='completed'&&!answered(q)) return false;
+  if(S.filter==='incomplete'&&answered(q)) return false;
+  return true;
+}
+
+function secId(name){ return 'sec-'+name.replace(/[^a-zA-Z0-9]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,''); }
+
+// ── SVG ICONS ─────────────────────────────────────────────────────────────────
+const ICON={
+  shield:`<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0369a1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  save:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>`,
+  csv:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  dl:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  reset:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.7"/></svg>`,
+  search:`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  chevron:`<svg class="acc-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>`,
+};
+
+// ── RENDER HELPERS ────────────────────────────────────────────────────────────
+function opts(list,val){
+  return list.map(o=>`<option value="${esc(o)}"${o===val?' selected':''}>${esc(o)}</option>`).join('');
+}
+
+function renderInput(q){
+  const item=S.answers[q.id]||{answer:'',comments:'',decision:'',policy:''};
+  if(q.t==='select'){
+    return `<select class="fi" data-qid="${q.id}" data-field="answer"><option value="">Select…</option>${opts(q.o,item.answer)}</select>`;
+  }
+  if(q.t==='textarea'){
+    return `<textarea class="fi" data-qid="${q.id}" data-field="answer" placeholder="${esc(q.g||'Type here…')}">${esc(item.answer)}</textarea>`;
+  }
+  if(q.t==='multiselect'){
+    const chk=Array.isArray(item.answer)?item.answer:[];
+    const cols=q.o.length>4?'grid-cols-2':'grid-cols-1';
+    return `<div class="border border-slate-200 rounded-xl p-3 bg-white grid ${cols} gap-2">
+      ${q.o.map(o=>`<label class="flex items-start gap-2 text-sm cursor-pointer">
+        <input type="checkbox" data-qid="${q.id}" data-option="${esc(o)}"${chk.includes(o)?' checked':''}>
+        <span>${esc(o)}</span></label>`).join('')}
+    </div>`;
+  }
+  return `<input type="text" class="fi" data-qid="${q.id}" data-field="answer" value="${esc(item.answer)}" placeholder="${esc(q.g||'Type here…')}">`;
+}
+
+function renderQuestion(q){
+  const item=S.answers[q.id]||{answer:'',comments:'',decision:'',policy:''};
+  const show=visible(q)?'':'display:none;';
+  return `<div class="qcard bg-white border border-slate-200 rounded-2xl p-5 mb-4" data-qid="${q.id}" style="${show}">
+    <div class="flex flex-wrap gap-2 mb-2">
+      <span class="text-xs font-medium bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full">${esc(q.id)}</span>
+      <span class="text-xs bg-white border border-slate-200 text-slate-500 px-2.5 py-0.5 rounded-full">${esc(q.t)}</span>
+    </div>
+    <h3 class="font-semibold text-base leading-relaxed mb-1">${esc(q.q)}</h3>
+    ${q.g?`<p class="text-sm text-slate-500 mb-3">${esc(q.g)}</p>`:'<div class="mb-3"></div>'}
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-4">
+      <div class="space-y-1.5">
+        <label class="text-sm font-medium text-slate-700">Customer Answer</label>
+        ${renderInput(q)}
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-sm font-medium text-slate-700">Comments &amp; Notes</label>
+        <textarea class="fi" data-qid="${q.id}" data-field="comments" placeholder="Workshop notes, assumptions, risks, dependencies…">${esc(item.comments)}</textarea>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div class="space-y-1.5">
+        <label class="text-sm font-medium text-slate-700">Design Decision</label>
+        <select class="fi" data-qid="${q.id}" data-field="decision"><option value="">Select decision…</option>${opts(DESIGN_DECISIONS,item.decision)}</select>
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-sm font-medium text-slate-700">Recommended DLP Policy &amp; Control</label>
+        <select class="fi" data-qid="${q.id}" data-field="policy"><option value="">Select policy…</option>${opts(REC_POLICIES,item.policy)}</select>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderSection(name,items,idx){
+  const done=items.filter(answered).length;
+  const sid=secId(name);
+  const isOpen=S.open.has(name);
+  return `<div class="bg-white border border-slate-200 rounded-2xl overflow-hidden mb-4" id="${sid}">
+    <button class="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors text-left" data-acc="${esc(name)}">
+      <div>
+        <div class="font-semibold text-lg">${esc(name)}</div>
+        <div class="text-sm text-slate-500">${items.length} question(s)</div>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <span class="text-xs font-medium bg-sky-100 text-sky-800 px-2.5 py-1 rounded-full" id="${sid}-badge">${done}/${items.length}</span>
+        <span class="acc-chevron${isOpen?' open':''}">${ICON.chevron}</span>
+      </div>
+    </button>
+    <div class="acc-body px-4 pb-2${isOpen?' open':''}" id="${sid}-body">
+      ${items.map(renderQuestion).join('')}
+    </div>
+  </div>`;
+}
+
+function renderSidebarSections(){
+  return sections().map(([name,items])=>{
+    const done=items.filter(answered).length;
+    const sid='sb-'+secId(name);
+    return `<div class="flex items-center justify-between border border-slate-200 rounded-xl p-3 bg-white mb-2" id="${sid}">
+      <div class="text-sm font-medium leading-snug flex-1 pr-2">${esc(name)}</div>
+      <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full whitespace-nowrap" id="${sid}-badge">${done}/${items.length}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderIndRec(){
+  const rec=IND_REC[S.meta.industry];
+  if(!rec) return `<p class="text-sm text-slate-400">เลือก Customer Industry เพื่อดูคำแนะนำ baseline</p>`;
+  return `<div class="flex flex-wrap gap-2 mb-3">
+    <span class="text-xs font-medium bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full">${esc(rec.decision)}</span>
+    <span class="text-xs font-medium bg-violet-100 text-violet-800 px-2.5 py-1 rounded-full">${esc(rec.policy)}</span>
+  </div>
+  <ul class="list-disc pl-4 text-sm text-slate-600 space-y-1">${rec.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`;
+}
+
+// ── FULL PAGE RENDER ──────────────────────────────────────────────────────────
+function renderPage(){
+  const p=progress();
+  const secs=sections();
+  document.getElementById('app').innerHTML=`
+  <!-- Header -->
+  <div class="bg-white border border-slate-200 rounded-3xl shadow-sm">
+    <div class="p-6 border-b border-slate-100">
+      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold flex items-center gap-3 mb-1">
+            ${ICON.shield} DLP Implement Assessment
+          </h1>
+          <p class="text-slate-500 text-sm">แบบสอบถามสำหรับ Workshop / Presales / Scoping / SOW Input &nbsp;·&nbsp; Export JSON/CSV &nbsp;·&nbsp; Auto-save ในเบราว์เซอร์</p>
+        </div>
+        <div class="flex flex-wrap gap-2 shrink-0">
+          <button data-action="apply-rec" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.save} Apply Industry Rec.</button>
+          <button data-action="export-csv" class="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.csv} Export CSV</button>
+          <button data-action="export-json" class="inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.dl} Export JSON</button>
+          <button data-action="reset" class="inline-flex items-center gap-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 text-sm font-medium px-4 py-2 rounded-xl transition-colors">${ICON.reset} Reset</button>
+        </div>
+      </div>
+    </div>
+    <div class="p-6 space-y-6">
+      <!-- Meta -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+        <div class="space-y-1.5">
+          <label class="text-sm font-medium text-slate-700">Customer Name</label>
+          <input type="text" class="fi" data-meta="customerName" value="${esc(S.meta.customerName)}" placeholder="Company name">
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-sm font-medium text-slate-700">Customer Industry</label>
+          <select class="fi" data-meta="industry"><option value="">Select industry…</option>${opts(INDUSTRIES,S.meta.industry)}</select>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-sm font-medium text-slate-700">Next Step</label>
+          <select class="fi" data-meta="stage"><option value="">Select stage…</option>${opts(STAGES,S.meta.stage)}</select>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-sm font-medium text-slate-700">Assessment Date</label>
+          <input type="date" class="fi" data-meta="date" value="${esc(S.meta.date)}">
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-sm font-medium text-slate-700">Prepared By</label>
+          <input type="text" class="fi" data-meta="preparedBy" value="${esc(S.meta.preparedBy)}" placeholder="Your name">
+        </div>
+      </div>
+      <!-- Stats -->
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div class="xl:col-span-2 bg-slate-50 border border-slate-200 rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div class="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Completion Progress</div>
+              <div class="text-2xl font-bold" id="prog-count">${p.done} / ${p.total}</div>
+            </div>
+            <span class="text-sm font-medium bg-sky-100 text-sky-800 px-3 py-1 rounded-full" id="prog-pct">${p.pct}% complete</span>
+          </div>
+          <div class="h-3 bg-slate-200 rounded-full overflow-hidden">
+            <div class="progress-fill h-full bg-sky-500 rounded-full" id="prog-bar" style="width:${p.pct}%"></div>
+          </div>
+        </div>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5">
+          <div class="text-xs text-slate-400 uppercase tracking-wide mb-3">Industry Recommendation</div>
+          <div id="ind-rec">${renderIndRec()}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main layout -->
+  <div class="flex flex-col lg:flex-row gap-6 items-start">
+    <!-- Sidebar -->
+    <div class="w-full lg:w-[280px] shrink-0 sidebar-sticky">
+      <div class="bg-white border border-slate-200 rounded-2xl p-4 space-y-5">
+        <div class="space-y-1.5">
+          <label class="text-sm font-medium text-slate-700">Search</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2">${ICON.search}</span>
+            <input type="text" class="fi" id="search-inp" style="padding-left:2.2rem;" placeholder="Search question or section…" value="${esc(S.search)}">
+          </div>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-sm font-medium text-slate-700">Filter</label>
+          <div class="flex bg-slate-100 rounded-xl p-1 gap-1">
+            <button data-filter="all" class="qtab flex-1 text-sm font-medium py-1.5 rounded-lg${S.filter==='all'?' bg-white shadow text-slate-900':' text-slate-500'}">All</button>
+            <button data-filter="completed" class="qtab flex-1 text-sm font-medium py-1.5 rounded-lg${S.filter==='completed'?' bg-white shadow text-slate-900':' text-slate-500'}">Done</button>
+            <button data-filter="incomplete" class="qtab flex-1 text-sm font-medium py-1.5 rounded-lg${S.filter==='incomplete'?' bg-white shadow text-slate-900':' text-slate-500'}">Open</button>
+          </div>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-sm font-medium text-slate-700">Sections</label>
+          <div class="max-h-[60vh] overflow-y-auto pr-0.5" id="sb-sections">${renderSidebarSections()}</div>
+        </div>
+      </div>
+    </div>
+    <!-- Questions -->
+    <div class="flex-1 min-w-0" id="q-area">
+      ${secs.map(([name,items],i)=>renderSection(name,items,i)).join('')}
+    </div>
+  </div>`;
+
+  bindEvents();
+}
+
+// ── EVENT BINDING ─────────────────────────────────────────────────────────────
+function bindEvents(){
+  // Meta inputs
+  document.querySelectorAll('[data-meta]').forEach(el=>{
+    el.addEventListener('input',e=>{
+      S.meta[e.target.dataset.meta]=e.target.value;
+      persist();
+      if(e.target.dataset.meta==='industry') document.getElementById('ind-rec').innerHTML=renderIndRec();
+    });
+    el.addEventListener('change',e=>{
+      S.meta[e.target.dataset.meta]=e.target.value;
+      persist();
+      if(e.target.dataset.meta==='industry') document.getElementById('ind-rec').innerHTML=renderIndRec();
+    });
+  });
+
+  // Answer inputs (text/textarea/select)
+  document.getElementById('q-area').addEventListener('input',handleQInput);
+  document.getElementById('q-area').addEventListener('change',handleQInput);
+
+  // Search
+  document.getElementById('search-inp').addEventListener('input',e=>{
+    S.search=e.target.value;
+    applyFilter();
+  });
+
+  // Filter tabs
+  document.querySelectorAll('[data-filter]').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      S.filter=e.currentTarget.dataset.filter;
+      document.querySelectorAll('[data-filter]').forEach(b=>{
+        const active=b.dataset.filter===S.filter;
+        b.className=`qtab flex-1 text-sm font-medium py-1.5 rounded-lg ${active?'bg-white shadow text-slate-900':'text-slate-500'}`;
+      });
+      applyFilter();
+    });
+  });
+
+  // Accordion
+  document.getElementById('q-area').addEventListener('click',e=>{
+    const btn=e.target.closest('[data-acc]');
+    if(!btn) return;
+    const name=btn.dataset.acc;
+    const sid=secId(name);
+    const body=document.getElementById(sid+'-body');
+    const chevron=btn.querySelector('.acc-chevron');
+    const isOpen=body.classList.contains('open');
+    body.classList.toggle('open',!isOpen);
+    if(chevron) chevron.classList.toggle('open',!isOpen);
+    isOpen?S.open.delete(name):S.open.add(name);
+  });
+
+  // Action buttons
+  document.querySelectorAll('[data-action]').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      const a=e.currentTarget.dataset.action;
+      if(a==='apply-rec') applyRec();
+      if(a==='export-csv') exportCSV();
+      if(a==='export-json') exportJSON();
+      if(a==='reset') resetAll();
+    });
+  });
+}
+
+function handleQInput(e){
+  const qid=e.target.dataset.qid;
+  const field=e.target.dataset.field;
+  const option=e.target.dataset.option;
+  if(!qid) return;
+  if(!S.answers[qid]) S.answers[qid]={answer:'',comments:'',decision:'',policy:''};
+
+  if(option!==undefined){
+    // checkbox multiselect
+    const cur=Array.isArray(S.answers[qid].answer)?S.answers[qid].answer:[];
+    S.answers[qid].answer=e.target.checked?[...cur,option]:cur.filter(x=>x!==option);
+  } else if(field){
+    S.answers[qid][field]=e.target.value;
+  }
+
+  persist();
+  tickProgress();
+  tickBadges(qid);
+  applyFilter();
+}
+
+// ── DYNAMIC UPDATES ───────────────────────────────────────────────────────────
+function tickProgress(){
+  const p=progress();
+  document.getElementById('prog-count').textContent=`${p.done} / ${p.total}`;
+  document.getElementById('prog-pct').textContent=`${p.pct}% complete`;
+  document.getElementById('prog-bar').style.width=`${p.pct}%`;
+}
+
+function tickBadges(changedQid){
+  const q=QUESTIONS.find(q=>q.id===changedQid);
+  if(!q) return;
+  const name=q.s;
+  const items=QUESTIONS.filter(x=>x.s===name);
+  const done=items.filter(answered).length;
+  const sid=secId(name);
+  const el=document.getElementById(sid+'-badge');
+  if(el) el.textContent=`${done}/${items.length}`;
+  const sbEl=document.getElementById('sb-'+sid+'-badge');
+  if(sbEl) sbEl.textContent=`${done}/${items.length}`;
+}
+
+function applyFilter(){
+  QUESTIONS.forEach(q=>{
+    const card=document.querySelector(`.qcard[data-qid="${q.id}"]`);
+    if(card) card.style.display=visible(q)?'':'none';
+  });
+}
+
+// ── ACTIONS ───────────────────────────────────────────────────────────────────
+function applyRec(){
+  if(!S.meta.industry){ alert('Please select Customer Industry first.'); return; }
+  const rec=IND_REC[S.meta.industry];
+  if(!rec) return;
+  QUESTIONS.forEach(q=>{
+    if(!S.answers[q.id].decision){
+      S.answers[q.id].decision=rec.decision;
+      const el=document.querySelector(`[data-qid="${q.id}"][data-field="decision"]`);
+      if(el) el.value=rec.decision;
+    }
+    if(!S.answers[q.id].policy){
+      S.answers[q.id].policy=rec.policy;
+      const el=document.querySelector(`[data-qid="${q.id}"][data-field="policy"]`);
+      if(el) el.value=rec.policy;
+    }
+  });
+  persist();
+  alert(`Industry recommendations applied for "${S.meta.industry}".`);
+}
+
+function dlFile(name,content,mime){
+  const blob=new Blob([content],{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=name; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportJSON(){
+  const name=`dlp_assessment_${(S.meta.customerName||'customer').replace(/\s+/g,'_')}.json`;
+  dlFile(name,JSON.stringify({meta:S.meta,answers:S.answers},null,2),'application/json');
+}
+
+function exportCSV(){
+  const rows=[
+    ['Customer Name',S.meta.customerName],
+    ['Customer Industry',S.meta.industry],
+    ['Next Step',S.meta.stage],
+    ['Assessment Date',S.meta.date],
+    ['Prepared By',S.meta.preparedBy],
+    [],
+    ['Section','Question ID','Assessment Question','Customer Answer','Comments','Design Decision','Recommended Policy']
+  ];
+  QUESTIONS.forEach(q=>{
+    const item=S.answers[q.id]||{};
+    rows.push([
+      q.s, q.id, q.q,
+      Array.isArray(item.answer)?item.answer.join('; '):(item.answer||''),
+      item.comments||'', item.decision||'', item.policy||''
+    ]);
+  });
+  const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const name=`dlp_assessment_${(S.meta.customerName||'customer').replace(/\s+/g,'_')}.csv`;
+  dlFile(name,'﻿'+csv,'text/csv;charset=utf-8;');
+}
+
+function resetAll(){
+  if(!confirm('Reset all answers? This cannot be undone.')) return;
+  S.meta={customerName:'',industry:'',stage:'',date:'',preparedBy:''};
+  S.answers=blankAnswers();
+  S.search=''; S.filter='all';
+  S.open=new Set(QUESTIONS.map(q=>q.s));
+  localStorage.removeItem(STORAGE_KEY);
+  renderPage();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+hydrate();
+renderPage();
+</script>
+</body>
+</html>
